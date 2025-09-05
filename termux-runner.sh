@@ -31,4 +31,4 @@ fi
     --loop \
     --loop-timeout 10 \
     --loop-error-ignore \
-    --output-dir /sdcard/sinotrack-alert-monitor:/mnt/scraper/out
+    --output-dir /sdcard/sinotrack-alert-monitor:/mnt/sinotrack-alert-monitor
