@@ -3,7 +3,7 @@ Entry point for the Sinotrack Alert Monitor web scraper.
 """
 import os
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 from selenium.webdriver.common.by import By
 
@@ -25,10 +25,11 @@ from framework.error_hook import ScreenshotErrorHook, NotificationErrorHook
 from framework.helpers import get_element, send_keys, random_sleep
 from framework.notifier import TelegramNotifier
 from framework.scraper_builder import ScraperBuilder
+from src.framework.helpers import click_element
 from state import init_state, save_state
 from utils import safe_int, haversine
 
-# TODO: tidy up
+
 def main() -> None:
     """
     Main function to run the Sinotrack alert monitor.
@@ -41,14 +42,6 @@ def main() -> None:
 
     # Initialize the application state
     state: Dict[str, Any] = init_state(startup_time)
-
-    # TODO: is it really needed?
-    # # An additional script to ensure the webdriver flag is hidden.
-    # self._driver.execute_script("""
-    #     Object.defineProperty(navigator, 'webdriver', {
-    #         get: () => undefined
-    #     });
-    # """)
 
     # Build and run the application using the framework
     scraper = (
@@ -65,13 +58,14 @@ def main() -> None:
         .with_step("Login", login_step)
         .with_step("Extract Data", extract_data_step)
         .with_step("Process Data", process_data_step)
+        .with_step("Update Session State", update_session_state)
         .build()
-    ).run()
+    )
 
     scraper.run()
 
 
-def login_step(driver, state, notify) -> None:
+def login_step(driver, state, notify):
     """
     Handles the login process on the Sinotrack website.
 
@@ -82,13 +76,13 @@ def login_step(driver, state, notify) -> None:
     random_sleep(1000, 2000)
 
     # Server selection
-    get_element(driver, (By.XPATH,
-                         "//label[normalize-space(text())='Server']/following-sibling::div//span[normalize-space(text())='Auto select']"),
-                60).click()
+    click_element(driver, (By.XPATH,
+                           "//label[normalize-space(text())='Server']/following-sibling::div//span[normalize-space(text())='Auto select']"),
+                  60)
     random_sleep(1000, 2000)
-    get_element(driver, (By.XPATH,
-                         "//div[normalize-space(text())='Server cluster']/following-sibling::ul//li[normalize-space(text())='Server 6 | Pro.SinoTrack']"),
-                60).click()
+    click_element(driver, (By.XPATH,
+                           "//div[normalize-space(text())='Server cluster']/following-sibling::ul//li[normalize-space(text())='Server 6 | Pro.SinoTrack']"),
+                  60)
     random_sleep(1000, 2000)
 
     # Credentials
@@ -100,10 +94,9 @@ def login_step(driver, state, notify) -> None:
     random_sleep(1000, 2000)
 
     # Agreement and login
-    get_element(driver, (By.CLASS_NAME, "ivu-checkbox"), 60).click()
+    click_element(driver, (By.CLASS_NAME, "ivu-checkbox"), 60)
     random_sleep(1000, 2000)
-    get_element(driver, (By.XPATH, "//button[span[normalize-space(text())='Login']]"), 60).click()
-    random_sleep(2000, 4000)  # Wait a bit longer for the map to load
+    click_element(driver, (By.XPATH, "//button[span[normalize-space(text())='Login']]"), 60)
 
 
 def extract_data_step(driver, state, notify):
@@ -114,13 +107,13 @@ def extract_data_step(driver, state, notify):
     expands the position section, and extracts various data points like link status, speed,
     alarm state, latitude, and longitude.
     """
-    get_element(driver, (By.XPATH,
-                         "//div[contains(@class, 'DeviceList')]//div[@class='CarNum' and normalize-space(text())='9176369853']"),
-                60).click()
+    click_element(driver, (By.XPATH,
+                           "//div[contains(@class, 'DeviceList')]//div[@class='CarNum' and normalize-space(text())='9176369853']"),
+                  60)
     random_sleep(1000, 2000)
-    get_element(driver, (By.XPATH,
-                         "//div[contains(@class, 'RealDataPanel')]//div[@class='ivu-collapse-item']//div[text()='Position']"),
-                60).click()
+    click_element(driver, (By.XPATH,
+                           "//div[contains(@class, 'RealDataPanel')]//div[@class='ivu-collapse-item']//div[text()='Position']"),
+                  60)
     random_sleep(1000, 2000)
 
     link_text = get_element(driver, (By.XPATH,
@@ -139,13 +132,16 @@ def extract_data_step(driver, state, notify):
                                           "//table[contains(@class, 'PosCard')]//div[contains(text(), 'Longitude')]/ancestor::tr/td[@class='State']"),
                                  60).text.strip()
 
-    return {
-        'link': link_text,
-        'speed': speed_text,
-        'alarm': alarm_text,
-        'latitude': latitude_text,
-        'longitude': longitude_text,
+    extracted_data: Dict[str, str] = {
+        'link_text': link_text,
+        'speed_text': speed_text,
+        'alarm_text': alarm_text,
+        'latitude_text': latitude_text,
+        'longitude_text': longitude_text,
     }
+    print(f"Extracted data: {extracted_data}")
+
+    state.update({'last_run': extracted_data})
 
 
 def process_data_step(driver, state, notify):
@@ -156,47 +152,59 @@ def process_data_step(driver, state, notify):
     If any thresholds are exceeded or conditions are met, a notification is sent.
     It also handles saving the initial geolocation for geofencing if not already present.
     """
+    last_run: Dict[str, Any] = state.get('last_run', {})
+
     # Check link status
-    link_text: str = state.get('link', '')
+    link_text = last_run.get('link_text')
     if "Online" not in link_text and link_text not in LINK_TEXT_EXCEPTIONS:
         notify(f"Sinotrack-Checker: Link is {link_text}")
 
     # Check speed
-    speed_text: str = state.get('speed', '')
+    speed_text = last_run.get('speed_text')
     if safe_int(speed_text, 0) > SPEED_THRESHOLD:
         notify(f"Sinotrack-Checker: Speed is {speed_text}, which is more than {SPEED_THRESHOLD}")
 
     # Check alarm
-    alarm_text: str = state.get('alarm', '')
+    alarm_text = last_run.get('alarm_text')
     if alarm_text and alarm_text not in ALARM_TEXT_EXCEPTIONS:
         notify(f"Sinotrack-Checker: Alarm State is {alarm_text}")
 
     # Check distance from geofence
-    latitude_text: str = state.get('latitude', '')
-    longitude_text: str = state.get('longitude', '')
+    latitude_text = last_run.get('latitude_text')
+    longitude_text = last_run.get('longitude_text')
     if (
             latitude_text and longitude_text
             and latitude_text not in LATITUDE_TEXT_EXCEPTIONS
             and longitude_text not in LONGITUDE_TEXT_EXCEPTIONS
     ):
         geofence: Dict[str, Any] = state.get('geofence', {})
-        init_latitude: Optional[float] = geofence.get('startup_latitude')
-        init_longitude: Optional[float] = geofence.get('startup_longitude')
+        startup_latitude = geofence.get('startup_latitude')
+        startup_longitude = geofence.get('startup_longitude')
 
-        if init_latitude and init_longitude:
-            latitude: float = float(latitude_text)
-            longitude: float = float(longitude_text)
-            distance: int = int(haversine(init_latitude, init_longitude, latitude, longitude))
-            print(f"Distance: {distance}m")
+        latitude = float(latitude_text)
+        longitude = float(longitude_text)
+
+        if startup_latitude and startup_longitude:
+            # Calculate geofence distance if startup_latitude and startup_longitude are set
+            print(f"Startup latitude: {startup_latitude}. Startup longitude: {startup_longitude}")
+            distance = int(haversine(startup_latitude, startup_longitude, latitude, longitude))
+            print(f"Geofence distance: {distance}m")
             if distance > GEOFENCE_THRESHOLD_METERS:
-                notify(f"Sinotrack-Checker: Distance: {distance}m, which is more than {GEOFENCE_THRESHOLD_METERS}m")
+                notify(
+                    f"Sinotrack-Checker: Geofence distance: {distance}m, which is more than {GEOFENCE_THRESHOLD_METERS}m")
         else:
-            print("Saving initial geolocation for geofence.")
-            state['geofence'] = {
-                'startup_latitude': float(latitude_text),
-                'startup_longitude': float(longitude_text),
-            }
-            save_state(state)  # Persist the new geofence data
+            # Update startup_latitude and startup_longitude if it's a new run
+            print("Update startup_latitude and startup_longitude for geofence.")
+            state.update({
+                'geofence': {
+                    'startup_latitude': latitude,
+                    'startup_longitude': longitude,
+                }
+            })
+
+
+def update_session_state(driver, state, notify):
+    save_state(state)
 
 
 if __name__ == "__main__":

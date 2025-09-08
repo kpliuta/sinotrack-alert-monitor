@@ -20,8 +20,26 @@ def get_element(driver: WebDriver, locator: Tuple[str, str], timeout: int = 10) 
     Returns:
         The located web element.
     """
+    print(f"Get an element  {locator[0]}='{locator[1]}'")
     wait = WebDriverWait(driver, timeout)
     return wait.until(ec.visibility_of_element_located(locator))
+
+
+def click_element(driver: WebDriver, locator: Tuple[str, str], timeout: int = 10) -> None:
+    """
+    Finds a web element using the given locator and clicks on it.
+
+    This function first waits for the element to become visible and then
+    performs a click action.
+
+    Args:
+        driver: The Selenium WebDriver instance.
+        locator: A tuple containing the By strategy and the locator string.
+        timeout: The maximum time in seconds to wait for the element to be visible.
+    """
+    print(f"Click an element  {locator[0]}='{locator[1]}'")
+    element = get_element(driver, locator, timeout)
+    element.click()
 
 
 def send_keys(driver: WebDriver, locator: Tuple[str, str], text: str, timeout: int = 10) -> None:
@@ -34,6 +52,7 @@ def send_keys(driver: WebDriver, locator: Tuple[str, str], text: str, timeout: i
         text: The text to be sent to the element.
         timeout: The maximum time in seconds to wait for the element to be visible.
     """
+    print(f"Send keys to an element  {locator[0]}='{locator[1]}'")
     txt = get_element(driver, locator, timeout)
     txt.send_keys(text)
 
@@ -47,6 +66,7 @@ def random_sleep(x: Union[int, float], y: Union[int, float]) -> None:
         y: The maximum sleep time in milliseconds.
     """
     random_duration = random.uniform(x, y) / 1000  # Convert to seconds
+    print(f"Sleep for  {random_duration} seconds")
     time.sleep(random_duration)
 
 
@@ -62,5 +82,5 @@ def save_screenshot(driver: WebDriver, screenshots_dir: str) -> None:
     """
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     screenshot_name = f"{screenshots_dir}/{timestamp}.png"
+    print(f"Save a screenshot to {screenshot_name}")
     driver.save_screenshot(screenshot_name)
-    print(f"Screenshot saved as {screenshot_name}")

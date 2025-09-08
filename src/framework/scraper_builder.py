@@ -53,7 +53,7 @@ class ScraperBuilder:
         Adds a named step to the execution sequence.
         Args:
             name: The name of the step (for logging).
-            func: A function that takes (driver, state, notify_callback) and returns a dictionary to be merged into the state.
+            func: A function that takes (driver, state, notify_callback).
         """
         self._steps.append((name, func))
         return self

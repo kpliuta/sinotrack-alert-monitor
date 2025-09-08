@@ -13,7 +13,7 @@ class ScraperRunner:
     def __init__(
             self,
             driver: webdriver.Firefox,
-            steps: List[Tuple[str, Callable]],
+            steps: List[Tuple[str, Callable[[webdriver.Firefox, Dict[str, Any], Callable[[str], None]], None]]],
             error_hooks: List[ErrorHook],
             state: Dict[str, Any],
             notifiers: List[Notifier]
@@ -41,9 +41,7 @@ class ScraperRunner:
         try:
             for name, func in self.steps:
                 print(f"- Executing step: {name}")
-                update = func(self.driver, self.state, self._notify_callback)
-                if update:
-                    self.state.update(update)
+                func(self.driver, self.state, self._notify_callback)
         except Exception as e:
             print(f"An unexpected error occurred during execution: {e}")
             for hook in self.error_hooks:

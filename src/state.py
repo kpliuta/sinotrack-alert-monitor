@@ -3,6 +3,7 @@ Manages the state of the scraper, including loading and saving data to a YAML fi
 """
 import os
 from typing import Dict, Any
+
 import yaml
 
 from config import SCRAPER_STATE_FILE, SCRAPER_SESSION_ID
@@ -55,7 +56,7 @@ def init_state(startup_time: str) -> Dict[str, Any]:
     current_session_id = state.get('session_id')
 
     if not state or current_session_id != SCRAPER_SESSION_ID:
-        print(f"Initializing new state for session ${SCRAPER_SESSION_ID}.")
+        print(f"Initializing new state for session {SCRAPER_SESSION_ID}.")
         state = {
             'session_id': SCRAPER_SESSION_ID,
             'startup_time': startup_time,
@@ -63,6 +64,12 @@ def init_state(startup_time: str) -> Dict[str, Any]:
         }
         save_state(state)
     else:
-        print("Continuing with existing state for session ${SCRAPER_SESSION_ID}.")
+        print(f"Continuing with existing state for session {SCRAPER_SESSION_ID}.")
+
+    state.update({
+        'last_run': {
+            'time': startup_time
+        }
+    })
 
     return state
