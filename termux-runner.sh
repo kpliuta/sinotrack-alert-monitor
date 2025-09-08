@@ -22,13 +22,12 @@ else
   git clone https://github.com/kpliuta/termux-web-scraper.git "$WORK_DIR/termux-web-scraper"
 fi
 
-# TODO: change a timeout to once in 10 min
-# Execute the scraper script in a loop with a 10 seconds timeout.
+# Execute the scraper script in a loop with a 10 minutes timeout.
 "$WORK_DIR/termux-web-scraper/scripts/run.sh" \
     --work-dir "$WORK_DIR" \
     --scenario-file src/main.py \
     --upgrade \
     --loop \
-    --loop-timeout 10 \
+    --loop-timeout 600 \
     --loop-error-ignore \
     --output-dir /sdcard/sinotrack-alert-monitor:/mnt/sinotrack-alert-monitor

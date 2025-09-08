@@ -6,6 +6,11 @@ from datetime import datetime
 from typing import Dict, Any
 
 from selenium.webdriver.common.by import By
+from termux_web_scraper.error_hook import ScreenshotErrorHook, NotificationErrorHook
+from termux_web_scraper.helpers import click_element
+from termux_web_scraper.helpers import get_element, send_keys, random_sleep
+from termux_web_scraper.notifier import TelegramNotifier
+from termux_web_scraper.scraper_builder import ScraperBuilder
 
 from config import (
     SINOTRACK_ACCOUNT,
@@ -21,11 +26,6 @@ from config import (
     TELEGRAM_CHAT_ID,
     SCRAPER_OUTPUT_DIR
 )
-from framework.error_hook import ScreenshotErrorHook, NotificationErrorHook
-from framework.helpers import get_element, send_keys, random_sleep
-from framework.notifier import TelegramNotifier
-from framework.scraper_builder import ScraperBuilder
-from src.framework.helpers import click_element
 from state import init_state, save_state
 from utils import safe_int, haversine
 
