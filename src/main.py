@@ -15,6 +15,7 @@ from termux_web_scraper.scraper_builder import ScraperBuilder
 from config import (
     SINOTRACK_ACCOUNT,
     SINOTRACK_PASSWORD,
+    SINOTRACK_DEVICE_ID,
     SPEED_THRESHOLD,
     GEOFENCE_THRESHOLD_METERS,
     LINK_TEXT_EXCEPTIONS,
@@ -108,7 +109,7 @@ def extract_data_step(driver, state, notify):
     alarm state, latitude, and longitude.
     """
     click_element(driver, (By.XPATH,
-                           "//div[contains(@class, 'DeviceList')]//div[@class='CarNum' and normalize-space(text())='9176369853']"),
+                           f"//div[contains(@class, 'DeviceList')]//div[@class='CarNum' and normalize-space(text())='{SINOTRACK_DEVICE_ID}']"),
                   60)
     random_sleep(1000, 2000)
     click_element(driver, (By.XPATH,

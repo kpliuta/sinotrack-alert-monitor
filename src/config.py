@@ -52,6 +52,7 @@ TELEGRAM_CHAT_ID: str = get_env_var("TELEGRAM_CHAT_ID")
 # Sinotrack credentials
 SINOTRACK_ACCOUNT: str = get_env_var("SINOTRACK_ACCOUNT")
 SINOTRACK_PASSWORD: str = get_env_var("SINOTRACK_PASSWORD")
+SINOTRACK_DEVICE_ID: str = get_env_var("SINOTRACK_DEVICE_ID")
 
 # Scraper state file
 SCRAPER_STATE_FILE: str = os.path.join(SCRAPER_OUTPUT_DIR, "state.yaml")
