@@ -10,8 +10,7 @@ python = "^3.12"
 python-dotenv = "^1.1.1"
 pyyaml = "^6.0.2"
 
-# TODO: specify a version of termux-web-scraper
-termux-web-scraper = { git = "https://github.com/kpliuta/termux-web-scraper.git", rev = "7e02b6eb" }
+termux-web-scraper = { git = "https://github.com/kpliuta/termux-web-scraper.git", rev = "0.1.0" }
 
 [build-system]
 requires = ["poetry-core"]
