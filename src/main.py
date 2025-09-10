@@ -25,7 +25,11 @@ from config import (
     TELEGRAM_API_URL,
     TELEGRAM_BOT_TOKEN,
     TELEGRAM_CHAT_ID,
-    SCRAPER_OUTPUT_DIR
+    SCRAPER_OUTPUT_DIR,
+    CHECK_LINK_STATUS_ENABLED,
+    CHECK_SPEED_ENABLED,
+    CHECK_ALARM_ENABLED,
+    CHECK_GEOFENCE_ENABLED
 )
 from state import init_state, save_state
 from utils import safe_int, haversine
@@ -156,52 +160,56 @@ def process_data_step(driver, state, notify):
     last_run: Dict[str, Any] = state.get('last_run', {})
 
     # Check link status
-    link_text = last_run.get('link_text')
-    if "Online" not in link_text and link_text not in LINK_TEXT_EXCEPTIONS:
-        notify(f"Sinotrack-Checker: Link is {link_text}")
+    if CHECK_LINK_STATUS_ENABLED:
+        link_text = last_run.get('link_text')
+        if "Online" not in link_text and link_text not in LINK_TEXT_EXCEPTIONS:
+            notify(f"Sinotrack-Checker: Link is {link_text}")
 
     # Check speed
-    speed_text = last_run.get('speed_text')
-    if safe_int(speed_text, 0) > SPEED_THRESHOLD:
-        notify(f"Sinotrack-Checker: Speed is {speed_text}, which is more than {SPEED_THRESHOLD}")
+    if CHECK_SPEED_ENABLED:
+        speed_text = last_run.get('speed_text')
+        if safe_int(speed_text, 0) > SPEED_THRESHOLD:
+            notify(f"Sinotrack-Checker: Speed is {speed_text}, which is more than {SPEED_THRESHOLD}")
 
     # Check alarm
-    alarm_text = last_run.get('alarm_text')
-    if alarm_text and alarm_text not in ALARM_TEXT_EXCEPTIONS:
-        notify(f"Sinotrack-Checker: Alarm State is {alarm_text}")
+    if CHECK_ALARM_ENABLED:
+        alarm_text = last_run.get('alarm_text')
+        if alarm_text and alarm_text not in ALARM_TEXT_EXCEPTIONS:
+            notify(f"Sinotrack-Checker: Alarm State is {alarm_text}")
 
     # Check distance from geofence
-    latitude_text = last_run.get('latitude_text')
-    longitude_text = last_run.get('longitude_text')
-    if (
-            latitude_text and longitude_text
-            and latitude_text not in LATITUDE_TEXT_EXCEPTIONS
-            and longitude_text not in LONGITUDE_TEXT_EXCEPTIONS
-    ):
-        geofence: Dict[str, Any] = state.get('geofence', {})
-        startup_latitude = geofence.get('startup_latitude')
-        startup_longitude = geofence.get('startup_longitude')
+    if CHECK_GEOFENCE_ENABLED:
+        latitude_text = last_run.get('latitude_text')
+        longitude_text = last_run.get('longitude_text')
+        if (
+                latitude_text and longitude_text
+                and latitude_text not in LATITUDE_TEXT_EXCEPTIONS
+                and longitude_text not in LONGITUDE_TEXT_EXCEPTIONS
+        ):
+            geofence: Dict[str, Any] = state.get('geofence', {})
+            startup_latitude = geofence.get('startup_latitude')
+            startup_longitude = geofence.get('startup_longitude')
 
-        latitude = float(latitude_text)
-        longitude = float(longitude_text)
+            latitude = float(latitude_text)
+            longitude = float(longitude_text)
 
-        if startup_latitude and startup_longitude:
-            # Calculate geofence distance if startup_latitude and startup_longitude are set
-            print(f"Startup latitude: {startup_latitude}. Startup longitude: {startup_longitude}")
-            distance = int(haversine(startup_latitude, startup_longitude, latitude, longitude))
-            print(f"Geofence distance: {distance}m")
-            if distance > GEOFENCE_THRESHOLD_METERS:
-                notify(
-                    f"Sinotrack-Checker: Geofence distance: {distance}m, which is more than {GEOFENCE_THRESHOLD_METERS}m")
-        else:
-            # Update startup_latitude and startup_longitude if it's a new run
-            print("Update startup_latitude and startup_longitude for geofence.")
-            state.update({
-                'geofence': {
-                    'startup_latitude': latitude,
-                    'startup_longitude': longitude,
-                }
-            })
+            if startup_latitude and startup_longitude:
+                # Calculate geofence distance if startup_latitude and startup_longitude are set
+                print(f"Startup latitude: {startup_latitude}. Startup longitude: {startup_longitude}")
+                distance = int(haversine(startup_latitude, startup_longitude, latitude, longitude))
+                print(f"Geofence distance: {distance}m")
+                if distance > GEOFENCE_THRESHOLD_METERS:
+                    notify(
+                        f"Sinotrack-Checker: Geofence distance: {distance}m, which is more than {GEOFENCE_THRESHOLD_METERS}m")
+            else:
+                # Update startup_latitude and startup_longitude if it's a new run
+                print("Update startup_latitude and startup_longitude for geofence.")
+                state.update({
+                    'geofence': {
+                        'startup_latitude': latitude,
+                        'startup_longitude': longitude,
+                    }
+                })
 
 
 def update_session_state(driver, state, notify):

@@ -32,6 +32,20 @@ def get_env_var(name: str, default: Optional[str] = None) -> str:
     return value
 
 
+def get_env_var_bool(name: str, default: bool = False) -> bool:
+    """
+    Gets a boolean environment variable.
+
+    Args:
+        name: The name of the environment variable.
+        default: The default value if the variable is not set.
+
+    Returns:
+        The boolean value of the environment variable.
+    """
+    return get_env_var(name, str(default)).lower() in ('true', '1', 'yes')
+
+
 # --- Technical & Security Parameters ---
 
 # Scraper session ID
@@ -57,15 +71,6 @@ SINOTRACK_DEVICE_ID: str = get_env_var("SINOTRACK_DEVICE_ID")
 # Scraper state file
 SCRAPER_STATE_FILE: str = os.path.join(SCRAPER_OUTPUT_DIR, "state.yaml")
 
-# TODO: remove if there's no use to it
-# User agents for the web driver
-USER_AGENTS: list[str] = [
-    "Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0",
-    "Mozilla/5.0 (X11; Linux x86_64; rv:110.0) Gecko/20100101 Firefox/110.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 11.6; rv:109.0) Gecko/20100101 Firefox/109.0",
-]
-
 # --- Scraper Parameters ---
 
 # Speed threshold in km/h
@@ -74,11 +79,14 @@ SPEED_THRESHOLD: int = int(get_env_var("SPEED_THRESHOLD", "10"))
 # Geofence threshold in meters
 GEOFENCE_THRESHOLD_METERS: int = int(get_env_var("GEOFENCE_THRESHOLD_METERS", "500"))
 
+# --- Alert Switches ---
+CHECK_LINK_STATUS_ENABLED: bool = get_env_var_bool("CHECK_LINK_STATUS_ENABLED", True)
+CHECK_SPEED_ENABLED: bool = get_env_var_bool("CHECK_SPEED_ENABLED", True)
+CHECK_ALARM_ENABLED: bool = get_env_var_bool("CHECK_ALARM_ENABLED", True)
+CHECK_GEOFENCE_ENABLED: bool = get_env_var_bool("CHECK_GEOFENCE_ENABLED", True)
+
 # Sometimes sinotrack returns unusual values and cause false-positive alerts. These filters are used to exclude these cases.
 LINK_TEXT_EXCEPTIONS: list[str] = ["-"]
 ALARM_TEXT_EXCEPTIONS: list[str] = []
 LATITUDE_TEXT_EXCEPTIONS: list[str] = ["-"]
 LONGITUDE_TEXT_EXCEPTIONS: list[str] = ["-"]
-
-# TODO: select active checkers
-# TODO: select active notifiers

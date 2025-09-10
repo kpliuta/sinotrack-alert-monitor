@@ -13,9 +13,10 @@ This script is designed to be run in two primary environments:
 *   **Speed Monitoring:** Sends an alert if the vehicle exceeds a predefined speed limit.
 *   **Geofence Monitoring:** Sends an alert if the vehicle moves beyond a specified distance from its initial location.
 *   **Device Status Monitoring:** Sends an alert if the tracker goes offline.
+*   **Alarm Monitoring:** Sends an alert if the device reports an alarm state.
 *   **Telegram Notifications:** Uses a Telegram bot to send real-time alerts.
 *   **Flexible Deployment:** Can be run on Android (via Termux) or on a desktop machine.
-*   **Configurable:** All thresholds, credentials, and tokens can be set via a `.env` file.
+*   **Configurable:** All thresholds, credentials, and alerts can be set via a `.env` file.
 *   **Resilient:** Built on the `termux-web-scraper` framework, it handles errors and can run in a continuous loop.
 
 ## How it Works
@@ -73,14 +74,25 @@ SCRAPER_SESSION_ID=session_id poetry run python src/main.py
 
 The following environment variables must be set in the `.env` file:
 
+### Core Configuration
 *   `SCRAPER_OUTPUT_DIR`: Absolute path to a directory for storing state files and screenshots.
 *   `TELEGRAM_API_URL`: The Telegram Bot API URL (default: `https://api.telegram.org`).
 *   `TELEGRAM_BOT_TOKEN`: Your Telegram bot token.
 *   `TELEGRAM_CHAT_ID`: The ID of the Telegram chat where alerts will be sent.
 *   `SINOTRACK_ACCOUNT`: Your Sinotrack account username.
 *   `SINOTRACK_PASSWORD`: Your Sinotrack account password.
+*   `SINOTRACK_DEVICE_ID`: The device identifier for the vehicle you want to monitor.
+
+### Thresholds
 *   `SPEED_THRESHOLD`: The speed limit in km/h. An alert is sent if this is exceeded (default: `10`).
 *   `GEOFENCE_THRESHOLD_METERS`: The geofence radius in meters. An alert is sent if the vehicle moves further than this (default: `500`).
+
+### Alert Switches
+You can enable or disable specific alerts by setting the following variables to `true` or `false`:
+*   `CHECK_LINK_STATUS_ENABLED`: Monitors if the tracker goes offline (default: `true`).
+*   `CHECK_SPEED_ENABLED`: Monitors if the vehicle exceeds the `SPEED_THRESHOLD` (default: `true`).
+*   `CHECK_ALARM_ENABLED`: Monitors the device's alarm state (default: `true`).
+*   `CHECK_GEOFENCE_ENABLED`: Monitors if the vehicle breaches the `GEOFENCE_THRESHOLD_METERS` (default: `true`).
 
 ## Contributing
 
